@@ -2,7 +2,7 @@
 Shared helpers for all packing algorithms.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from utils.geometry_utils import calculate_bounding_box, calculate_polygon_area
 

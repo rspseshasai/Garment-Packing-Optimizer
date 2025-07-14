@@ -1,0 +1,3 @@
+# Core dependencies
+matplotlib>=3.5
+rectpack>=0.2.2
