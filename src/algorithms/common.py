@@ -4,7 +4,7 @@ Shared helpers for all packing algorithms.
 
 from typing import Any, Dict
 
-from utils.geometry_utils import calculate_bounding_box, calculate_polygon_area
+from src.utils.geometry_utils import calculate_bounding_box, calculate_polygon_area
 
 
 def compute_piece_metadata(piece: Dict[str, Any]) -> Dict[str, Any]:

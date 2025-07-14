@@ -6,8 +6,8 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, List
 
-from utils.io_utils import load_input_data
-from algorithms import PACKERS
+from src.utils.io_utils import load_input_data
+from src.algorithms import PACKERS
 from visualize import plot_packing_results
 
 
