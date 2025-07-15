@@ -21,7 +21,7 @@ def display_summary(result: Dict[str, Any]) -> None:
 
 
 def main() -> None:
-    data_path = Path("../inputs/input2.json")
+    data_path = Path("../inputs/input1.json")
     input_data = load_input_data(data_path)
 
     results: List[Dict[str, Any]] = []
