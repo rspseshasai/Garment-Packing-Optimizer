@@ -6,7 +6,8 @@ from ..utils.logger_utils import logger
 
 def pack_first_fit_row_wise(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
-    logger.info(f"========= First-Fit Row-Wise =========")
+    logger.info(f"\n")
+    logger.info(f"========= ========= First-Fit Row-Wise ========= =========")
     fabric_w = input_data["fabric_width_cm"]
     fabric_l = input_data["fabric_length_cm"]
     margin = input_data["fabric_margin_cm"]

@@ -1,12 +1,12 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 
 import matplotlib.colors as mcolors
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+from tabulate import tabulate
 
 
 def desaturate_color(color_name: str, blend_ratio: float = 0.7) -> Tuple[float, float, float]:
-
     base = mcolors.to_rgb(color_name)
     white = (1.0, 1.0, 1.0)
     return tuple(blend_ratio * c + (1 - blend_ratio) * w for c, w in zip(base, white))
@@ -24,7 +24,6 @@ SUBTLE_COLORS = [desaturate_color(c, blend_ratio=0.8) for c in DISTINCT_COLORS]
 
 
 def plot_packing_results(results: List[Dict]) -> None:
-
     n = len(results)
     fig, axes = plt.subplots(1, n, figsize=(6 * n, 6))
     if n == 1:
@@ -85,3 +84,24 @@ def plot_packing_results(results: List[Dict]) -> None:
 
     plt.tight_layout()
     plt.show()
+
+
+def print_summary_table(results: List[Dict[str, Any]]) -> None:
+    summary_rows = []
+    for result in results:
+        fabric_area = (result["fabric_width_cm"] / 100) * (result["fabric_length_cm"] / 100)
+        used_area = result["placed_area_cm2"] / 10000
+        waste_area = result["waste_area_cm2"] / 10000
+        utilization = used_area / fabric_area * 100
+
+        summary_rows.append([
+            result["version"],
+            f"{result['placed_count']}/{result['total_count']}",
+            f"{fabric_area:.2f} m²",
+            f"{used_area:.3f} m²",
+            f"{waste_area:.3f} m²",
+            f"{utilization:.1f}%",
+        ])
+
+    headers = ["Algorithm", "Placed", "Fabric Area", "Used Area", "Waste", "Utilization"]
+    print("\n" + tabulate(summary_rows, headers=headers, tablefmt="fancy_grid"))

@@ -1,8 +1,7 @@
 from src.utils.config_loader import load_yaml_config
 from .first_fit_row_wise import pack_first_fit_row_wise
 from .maxrects_packer import pack_with_maxrects
-from .shelf_algorithms import pack_shelf_fit_bwf, pack_shelf_fit_bfdh
-from .shelf_fit_bhf import pack_shelf_fit_bhf
+from .shelf_algorithms import pack_shelf_fit_bwf, pack_shelf_fit_bfdh, pack_shelf_fit_bhf
 
 ALGORITHM_REGISTRY = {
     "first_fit": pack_first_fit_row_wise,

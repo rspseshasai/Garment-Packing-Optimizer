@@ -9,7 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 def pack_shelf_fit_bwf(input_data: Dict[str, Any], version: str = "Shelf Fit BWF") -> Dict[str, Any]:
-    logger.info(f"========= {version} =========")
+
+    logger.info(f"\n")
+    logger.info(f"========= ========= {version} ========= =========")
 
     fabric_width = input_data["fabric_width_cm"]
     fabric_length = input_data["fabric_length_cm"]
@@ -71,10 +73,12 @@ def pack_shelf_fit_bwf(input_data: Dict[str, Any], version: str = "Shelf Fit BWF
             "y_cm": y_position,
             "normalized_vertices_cm": piece["normalized_vertices_cm"],
         })
+        logger.info("Placed piece '%s' at (%.2f, %.2f)", piece["id"], x_position, y_position)
 
         total_placed_area += piece["area_cm2"]
         placed_piece_count += 1
 
+    logger.info("\n")
     logger.info(f"Total shelves used: {len(shelves)}")
     for i, ids in enumerate(shelf_piece_ids):
         logger.info(f"  Shelf {i} (y = {shelves[i]['y_cm']}, height = {shelves[i]['height_cm']}):")
@@ -108,3 +112,100 @@ def pack_shelf_fit_bfdh(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
     # Call base BWF algorithm
     return pack_shelf_fit_bwf(sorted_input, "Shelf Fit BFDH")
+
+
+# TODO: Remove below function
+def pack_shelf_fit_bhf(input_data: Dict[str, Any]) -> Dict[str, Any]:
+
+    logger.info("========= Shelf Fit BHF =========")
+
+    fabric_width = input_data["fabric_width_cm"]
+    fabric_length = input_data["fabric_length_cm"]
+    fabric_margin = input_data["fabric_margin_cm"]
+
+    piece_metadata = [compute_piece_metadata(piece) for piece in input_data["pieces"]]
+
+    shelves: List[Dict[str, float]] = []
+    shelf_piece_ids: List[List[str]] = []
+    placements: List[Dict[str, Any]] = []
+
+    total_placed_area = 0.0
+    placed_piece_count = 0
+
+    for piece in piece_metadata:
+        piece_width = piece["width_cm"]
+        piece_height = piece["height_cm"]
+
+        best_shelf_index = None
+        smallest_height_diff = float("inf")
+
+        # Try fitting into existing shelves based on best height match
+        for index, shelf in enumerate(shelves):
+            if piece_height <= shelf["height_cm"]:
+                height_diff = shelf["height_cm"] - piece_height
+                remaining_width = fabric_width - (shelf["x_cursor"] + piece_width)
+
+                if remaining_width >= 0 and height_diff < smallest_height_diff:
+                    best_shelf_index = index
+                    smallest_height_diff = height_diff
+
+        # If a matching shelf is found, place the piece there
+        if best_shelf_index is not None:
+            shelf = shelves[best_shelf_index]
+            x_position = shelf["x_cursor"]
+            y_position = shelf["y_cm"]
+            shelf["x_cursor"] += piece_width + fabric_margin
+            shelf_piece_ids[best_shelf_index].append(piece["id"])
+
+        else:
+            # Create new shelf
+            y_position = (
+                shelves[-1]["y_cm"] + shelves[-1]["height_cm"] + fabric_margin
+                if shelves else 0.0
+            )
+
+            if y_position + piece_height > fabric_length:
+                logger.info(f"Skipping '{piece['id']}' – no vertical space left.")
+                continue
+
+            shelves.append({
+                "y_cm": y_position,
+                "height_cm": piece_height,
+                "x_cursor": piece_width + fabric_margin
+            })
+            shelf_piece_ids.append([piece["id"]])
+            x_position = 0.0
+
+        # Record placement
+        placements.append({
+            "id": piece["id"],
+            "x_cm": x_position,
+            "y_cm": y_position,
+            "normalized_vertices_cm": piece["normalized_vertices_cm"],
+        })
+
+        total_placed_area += piece["area_cm2"]
+        placed_piece_count += 1
+
+    # Shelf summary log
+    logger.info(f"Total shelves used: {len(shelves)}")
+    for i, shelf in enumerate(shelves):
+        logger.info(
+            f"  Shelf {i} (y = {shelf['y_cm']} cm, height = {shelf['height_cm']} cm):"
+        )
+        for pid in shelf_piece_ids[i]:
+            logger.info(f"    - {pid}")
+
+    total_area = fabric_width * fabric_length
+    waste_area = total_area - total_placed_area
+
+    return {
+        "version": "Shelf Fit BHF",
+        "placements": placements,
+        "fabric_width_cm": fabric_width,
+        "fabric_length_cm": fabric_length,
+        "placed_count": placed_piece_count,
+        "total_count": len(piece_metadata),
+        "placed_area_cm2": round(total_placed_area, 2),
+        "waste_area_cm2": round(waste_area, 2),
+    }

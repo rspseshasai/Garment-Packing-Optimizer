@@ -1,5 +1,6 @@
 algorithms:
   - first_fit
+#  - shelf_bhf
   - shelf_bwf
   - shelf_bfdh
   - maxrects

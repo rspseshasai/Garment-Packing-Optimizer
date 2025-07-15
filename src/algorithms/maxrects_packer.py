@@ -8,7 +8,8 @@ from ..utils.logger_utils import logger
 
 def pack_with_maxrects(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
-    logger.info(f"========= MaxRects BSSF =========")
+    logger.info(f"\n")
+    logger.info(f"========= ========= MaxRects BSSF ========= =========")
     fabric_w = input_data["fabric_width_cm"]
     fabric_l = input_data["fabric_length_cm"]
     margin = input_data["fabric_margin_cm"]
@@ -52,6 +53,7 @@ def pack_with_maxrects(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "normalized_vertices_cm": verts,
         })
         placed_area += meta["area_cm2"]
+        logger.info("Placed piece '%s' at (%.2f, %.2f)", rid, x + margin, y + margin)
 
     total_area = fabric_w * fabric_l
     waste = total_area - placed_area
