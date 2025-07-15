@@ -3,10 +3,12 @@ from typing import Any, Dict, List
 from rectpack import MaxRectsBssf, PackingMode, newPacker
 
 from .common import compute_piece_metadata
+from ..utils.logger_utils import logger
 
 
 def pack_with_maxrects(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
+    logger.info(f"========= MaxRects BSSF =========")
     fabric_w = input_data["fabric_width_cm"]
     fabric_l = input_data["fabric_length_cm"]
     margin = input_data["fabric_margin_cm"]
@@ -17,7 +19,7 @@ def pack_with_maxrects(input_data: Dict[str, Any]) -> Dict[str, Any]:
     packer = newPacker(
         mode=PackingMode.Offline,
         pack_algo=MaxRectsBssf,
-        rotation=True,
+        rotation=True
     )
 
     pieces_meta: List[Dict[str, Any]] = []

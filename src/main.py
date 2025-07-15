@@ -14,7 +14,6 @@ def display_summary(result: Dict[str, Any]) -> None:
     waste_m2 = result["waste_area_cm2"] / 10000
     utilization = used_m2 / (w_m * l_m) * 100
 
-    logger.info(f"========= {result['version']} Summary =========")
     logger.info(f"Placed {result['placed_count']}/{result['total_count']} pieces")
     logger.info(f"Fabric: {w_m:.2f} m × {l_m:.2f} m")
     logger.info(f"Total area: {w_m * l_m:.2f} m²")
