@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 from src.algorithms import PACKERS
+from src.utils.config_loader import load_yaml_config
 from src.utils.io_utils import load_input_data
 from src.utils.logger_utils import logger
 from visualize import plot_packing_results
@@ -21,7 +22,8 @@ def display_summary(result: Dict[str, Any]) -> None:
 
 
 def main() -> None:
-    data_path = Path("../inputs/input1.json")
+    config = load_yaml_config()
+    data_path = Path(config.get("input_file", "../inputs/input1.json"))
     input_data = load_input_data(data_path)
 
     results: List[Dict[str, Any]] = []
