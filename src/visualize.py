@@ -1,7 +1,3 @@
-"""
-Visualization of packing layouts.
-"""
-
 from typing import Dict, List, Tuple
 
 import matplotlib.colors as mcolors
@@ -10,16 +6,7 @@ import matplotlib.pyplot as plt
 
 
 def desaturate_color(color_name: str, blend_ratio: float = 0.7) -> Tuple[float, float, float]:
-    """
-    Blend a named Matplotlib color with white to reduce brightness.
 
-    Args:
-        color_name: e.g. "red", "#FFAA00"
-        blend_ratio: between 0 (white) and 1 (original color).
-
-    Returns:
-        An (r, g, b) tuple.
-    """
     base = mcolors.to_rgb(color_name)
     white = (1.0, 1.0, 1.0)
     return tuple(blend_ratio * c + (1 - blend_ratio) * w for c, w in zip(base, white))
@@ -37,12 +24,7 @@ SUBTLE_COLORS = [desaturate_color(c, blend_ratio=0.8) for c in DISTINCT_COLORS]
 
 
 def plot_packing_results(results: List[Dict]) -> None:
-    """
-    Plot each packing result side‐by‐side.
 
-    Args:
-        results: list of dicts from pack_* functions.
-    """
     n = len(results)
     fig, axes = plt.subplots(1, n, figsize=(6 * n, 6))
     if n == 1:

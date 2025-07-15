@@ -1,25 +1,11 @@
-"""
-First‐Fit Row‐Wise packing algorithm.
-"""
-
-import logging
 from typing import Any, Dict, List
 
 from .common import compute_piece_metadata
-
-logger = logging.getLogger(__name__)
+from ..utils.logger_utils import logger
 
 
 def pack_first_fit_row_wise(input_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Place pieces row by row: start a new row when width is exceeded.
 
-    Args:
-        input_data: dict with fabric dims, margin, and pieces list.
-
-    Returns:
-        A result dict with placements and statistics.
-    """
     fabric_w = input_data["fabric_width_cm"]
     fabric_l = input_data["fabric_length_cm"]
     margin = input_data["fabric_margin_cm"]
@@ -34,6 +20,7 @@ def pack_first_fit_row_wise(input_data: Dict[str, Any]) -> Dict[str, Any]:
     placed_count = 0
 
     for piece in pieces:
+
         w, h = piece["width_cm"], piece["height_cm"]
 
         if x_cursor + w > fabric_w:
@@ -43,7 +30,7 @@ def pack_first_fit_row_wise(input_data: Dict[str, Any]) -> Dict[str, Any]:
             max_row_h = 0.0
 
         if y_cursor + h > fabric_l:
-            logger.info("Skipping piece '%s': no vertical space", piece["id"])
+            # logger.info("Skipping piece '%s': no vertical space", piece["id"])
             continue
 
         placements.append({
@@ -52,7 +39,7 @@ def pack_first_fit_row_wise(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "y_cm": y_cursor,
             "normalized_vertices_cm": piece["normalized_vertices_cm"],
         })
-        logger.info("Placed piece '%s' at (%.2f, %.2f)", piece["id"], x_cursor, y_cursor)
+        # logger.info("Placed piece '%s' at (%.2f, %.2f)", piece["id"], x_cursor, y_cursor)
 
         x_cursor += w + margin
         max_row_h = max(max_row_h, h)

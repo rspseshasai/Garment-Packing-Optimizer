@@ -1,27 +1,12 @@
-"""
-MaxRects packing algorithm using `rectpack`’s BSSF strategy.
-"""
-
-import logging
 from typing import Any, Dict, List
 
 from rectpack import MaxRectsBssf, PackingMode, newPacker
 
 from .common import compute_piece_metadata
 
-logger = logging.getLogger(__name__)
-
 
 def pack_with_maxrects(input_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Use an offline MaxRects (best‐short‐side‐fit) packer with rotation.
 
-    Args:
-        input_data: dict with fabric dims, margin, and pieces.
-
-    Returns:
-        A result dict with placements and statistics.
-    """
     fabric_w = input_data["fabric_width_cm"]
     fabric_l = input_data["fabric_length_cm"]
     margin = input_data["fabric_margin_cm"]

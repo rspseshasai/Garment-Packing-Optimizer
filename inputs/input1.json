@@ -5,60 +5,49 @@
   "pieces": [
     {
       "id": "front_panel",
-      "vertices_cm": [[0,0],[45,0],[45,70],[0,70]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[45,0],[45,70],[0,70]]
     },
     {
       "id": "sleeve_left",
-      "vertices_cm": [[0,0],[60,0],[60,30],[30,40],[0,30]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[60,0],[60,30],[30,40],[0,30]]
     },
         {
       "id": "pocket_back",
-      "vertices_cm": [[0,0],[15,0],[15,18],[0,18]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[15,0],[15,18],[0,18]]
     },
     {
       "id": "sleeve_right",
-      "vertices_cm": [[0,0],[60,0],[60,30],[30,40],[0,30]],
-      "allow_rotation": false
+      "vertices_cm": [[0,0],[60,0],[60,30],[30,40],[0,30]]
     },
     {
       "id": "pocket_front",
-      "vertices_cm": [[0,0],[15,0],[15,18],[0,18]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[15,0],[15,18],[0,18]]
     },
 
         {
       "id": "back_panel",
-      "vertices_cm": [[0,0],[45,0],[45,70],[0,70]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[45,0],[45,70],[0,70]]
     },
     {
       "id": "pants_front",
-      "vertices_cm": [[0,0],[50,0],[50,80],[0,80]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[50,0],[50,80],[0,80]]
     },
 
     {
       "id": "collar",
-      "vertices_cm": [[0,0],[40,0],[40,10],[0,10]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[40,0],[40,10],[0,10]]
     },
     {
       "id": "cuff_left",
-      "vertices_cm": [[0,0],[25,0],[25,10],[0,10]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[25,0],[25,10],[0,10]]
     },
     {
       "id": "cuff_right",
-      "vertices_cm": [[0,0],[25,0],[25,10],[0,10]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[25,0],[25,10],[0,10]]
     },
         {
       "id": "pants_back",
-      "vertices_cm": [[0,0],[50,0],[50,80],[0,80]],
-      "allow_rotation": true
+      "vertices_cm": [[0,0],[50,0],[50,80],[0,80]]
     }
   ]
 }
