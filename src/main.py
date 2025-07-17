@@ -9,7 +9,7 @@ from visualize import plot_packing_results, print_summary_table
 
 def main() -> None:
     config = load_yaml_config()
-    data_path = Path(config.get("input_file", "../inputs/input1.json"))
+    data_path = Path(config.get("input_file", "../input/input1.json"))
     input_data = load_input_data(data_path)
 
     results: List[Dict[str, Any]] = []

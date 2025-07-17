@@ -1,211 +1,286 @@
 import logging
 from copy import deepcopy
-from typing import Any, Dict
-from typing import List
+from typing import Any, Dict, List, Optional, Tuple
 
 from .common import compute_piece_metadata
+from ..utils.logger_utils import logger
 
-logger = logging.getLogger(__name__)
+
+class Shelf:
+    """Represents a horizontal shelf for placing rectangles."""
+
+    def __init__(self, y: float, height: float, margin: float, fabric_width: Optional[float] = None):
+        self.y = y
+        self.height = height
+        self.margin = margin
+        self.x_cursor = 0.0
+        self.piece_ids: List[str] = []
+
+        # only used by Floor–Ceiling variant
+        self.ceil_x: Optional[float] = fabric_width
+        self.closed: bool = False
+
+    def can_place_floor(self, width: float, height: float, fabric_width: float) -> bool:
+        return height <= self.height and (self.x_cursor + width) <= fabric_width
+
+    def place_on_floor(self, piece_id: str, width: float) -> float:
+        x_pos = self.x_cursor
+        self.x_cursor += width + self.margin
+        self.piece_ids.append(piece_id)
+        return x_pos
+
+    def can_place_ceiling(self, width: float, height: float) -> bool:
+        if not self.closed or self.ceil_x is None:
+            return False
+        return height <= self.height and (self.ceil_x - width) >= self.x_cursor
+
+    def place_on_ceiling(self, piece_id: str, width: float, height: float) -> Tuple[float, float]:
+        assert self.ceil_x is not None
+        x_pos = self.ceil_x - width
+        y_pos = self.y + self.height - height
+        self.ceil_x -= width + self.margin
+        self.piece_ids.append(piece_id)
+        return x_pos, y_pos
 
 
-def pack_shelf_fit_bwf(input_data: Dict[str, Any], version: str = "Shelf Fit BWF") -> Dict[str, Any]:
-
-    logger.info(f"\n")
-    logger.info(f"========= ========= {version} ========= =========")
-
-    fabric_width = input_data["fabric_width_cm"]
-    fabric_length = input_data["fabric_length_cm"]
-    fabric_margin = input_data["fabric_margin_cm"]
-
-    pieces = [compute_piece_metadata(p) for p in input_data["pieces"]]
-
-    shelves: List[Dict[str, float]] = []
-    shelf_piece_ids: List[List[str]] = []
+def _shelf_fit_base(
+    metas: List[Dict[str, Any]],
+    fabric_width: float,
+    fabric_length: float,
+    margin: float
+) -> Tuple[List[Dict[str, Any]], List[Shelf], float, int]:
+    """
+    Core Best‑Width Fit shelf logic.
+    Returns (placements, shelves, placed_area, placed_count).
+    """
     placements: List[Dict[str, Any]] = []
+    shelves: List[Shelf] = []
+    placed_area = 0.0
+    placed_count = 0
 
-    total_placed_area = 0.0
-    placed_piece_count = 0
+    for meta in metas:
+        pid = meta["id"]
+        width = meta["width_cm"]
+        height = meta["height_cm"]
 
-    for piece in pieces:
-        piece_width = piece["width_cm"]
-        piece_height = piece["height_cm"]
+        # 1) Find best existing shelf by minimal leftover width
+        best_idx: Optional[int] = None
+        best_leftover = fabric_width + 1
+        for i, shelf in enumerate(shelves):
+            if shelf.can_place_floor(width, height, fabric_width):
+                leftover = fabric_width - (shelf.x_cursor + width)
+                if leftover < best_leftover:
+                    best_leftover = leftover
+                    best_idx = i
 
-        best_fit_index = None
-        min_remaining_width = float("inf")
-
-        # Try all existing shelves
-        for idx, shelf in enumerate(shelves):
-            if piece_height <= shelf["height_cm"]:
-                remaining_width = fabric_width - (shelf["x_cursor"] + piece_width)
-                if 0 <= remaining_width < min_remaining_width:
-                    best_fit_index = idx
-                    min_remaining_width = remaining_width
-
-        if best_fit_index is not None:
-            # Place in best fitting shelf
-            shelf = shelves[best_fit_index]
-            x_position = shelf["x_cursor"]
-            y_position = shelf["y_cm"]
-            shelf["x_cursor"] += piece_width + fabric_margin
-            shelf_piece_ids[best_fit_index].append(piece["id"])
+        # 2) Place on chosen shelf or open new one
+        if best_idx is not None:
+            shelf = shelves[best_idx]
+            x = shelf.place_on_floor(pid, width)
+            y = shelf.y
         else:
-            # Create new shelf
-            y_position = (
-                shelves[-1]["y_cm"] + shelves[-1]["height_cm"] + fabric_margin
-                if shelves else 0.0
-            )
-            if y_position + piece_height > fabric_length:
-                logger.info(f"Skipping '{piece['id']}' – no vertical space.")
+            y = (shelves[-1].y + shelves[-1].height + margin) if shelves else 0.0
+            if y + height > fabric_length:
+                # logger.info("Skipping '%s': no vertical space", pid)
                 continue
+            shelf = Shelf(y, height, margin)
+            shelves.append(shelf)
+            x = shelf.place_on_floor(pid, width)
 
-            shelves.append({
-                "y_cm": y_position,
-                "height_cm": piece_height,
-                "x_cursor": piece_width + fabric_margin
-            })
-            shelf_piece_ids.append([piece["id"]])
-            x_position = 0.0
-
-        # Record placement
+        # 3) Record placement
         placements.append({
-            "id": piece["id"],
-            "x_cm": x_position,
-            "y_cm": y_position,
-            "normalized_vertices_cm": piece["normalized_vertices_cm"],
+            "id": pid,
+            "x_cm": x,
+            "y_cm": y,
+            "normalized_vertices_cm": meta["normalized_vertices_cm"],
         })
-        logger.info("Placed piece '%s' at (%.2f, %.2f)", piece["id"], x_position, y_position)
+        # logger.info("Placed '%s' at (%.2f, %.2f)", pid, x, y)
 
-        total_placed_area += piece["area_cm2"]
-        placed_piece_count += 1
+        placed_area += meta["area_cm2"]
+        placed_count += 1
 
-    logger.info("\n")
-    logger.info(f"Total shelves used: {len(shelves)}")
-    for i, ids in enumerate(shelf_piece_ids):
-        logger.info(f"  Shelf {i} (y = {shelves[i]['y_cm']}, height = {shelves[i]['height_cm']}):")
-        for pid in ids:
-            logger.info(f"    - {pid}")
+    return placements, shelves, placed_area, placed_count
 
-    total_area = fabric_width * fabric_length
-    waste_area = total_area - total_placed_area
+
+def pack_shelf_fit_bwf(input_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Shelf Fit – Best Width Fit.
+    Greedily places each piece in the shelf with least leftover width.
+    """
+    version = "Shelf Fit BWF"
+    # logger.info("========= %s =========", version)
+
+    fw = input_data["fabric_width_cm"]
+    fl = input_data["fabric_length_cm"]
+    m = input_data["fabric_margin_cm"]
+    metas = [compute_piece_metadata(p) for p in input_data["pieces"]]
+
+    placements, shelves, area, count = _shelf_fit_base(metas, fw, fl, m)
+    waste = fw * fl - area
 
     return {
         "version": version,
         "placements": placements,
-        "fabric_width_cm": fabric_width,
-        "fabric_length_cm": fabric_length,
-        "placed_count": placed_piece_count,
-        "total_count": len(pieces),
-        "placed_area_cm2": round(total_placed_area, 2),
-        "waste_area_cm2": round(waste_area, 2),
+        "shelves": [{"y_cm": s.y, "height_cm": s.height} for s in shelves],
+        "fabric_width_cm": fw,
+        "fabric_length_cm": fl,
+        "placed_count": count,
+        "total_count": len(metas),
+        "placed_area_cm2": round(area, 2),
+        "waste_area_cm2": round(waste, 2),
     }
 
 
 def pack_shelf_fit_bfdh(input_data: Dict[str, Any]) -> Dict[str, Any]:
-    sorted_input = deepcopy(input_data)
+    """
+    Shelf Fit – Best Fit Decreasing Height.
+    Sorts pieces by height descending, then applies BWF logic.
+    """
+    version = "Shelf Fit BFDH"
+    # logger.info("========= %s =========", version)
 
-    # Sort pieces by height descending
-    pieces_with_meta = [
-        (piece, compute_piece_metadata(piece)) for piece in sorted_input["pieces"]
-    ]
-    pieces_with_meta.sort(key=lambda x: x[1]["height_cm"], reverse=True)
-    sorted_input["pieces"] = [piece for piece, _ in pieces_with_meta]
+    data = deepcopy(input_data)
+    metas = [compute_piece_metadata(p) for p in data["pieces"]]
+    metas.sort(key=lambda m: m["height_cm"], reverse=True)
 
-    # Call base BWF algorithm
-    return pack_shelf_fit_bwf(sorted_input, "Shelf Fit BFDH")
-
-
-# TODO: Remove below function
-def pack_shelf_fit_bhf(input_data: Dict[str, Any]) -> Dict[str, Any]:
-
-    logger.info("========= Shelf Fit BHF =========")
-
-    fabric_width = input_data["fabric_width_cm"]
-    fabric_length = input_data["fabric_length_cm"]
-    fabric_margin = input_data["fabric_margin_cm"]
-
-    piece_metadata = [compute_piece_metadata(piece) for piece in input_data["pieces"]]
-
-    shelves: List[Dict[str, float]] = []
-    shelf_piece_ids: List[List[str]] = []
-    placements: List[Dict[str, Any]] = []
-
-    total_placed_area = 0.0
-    placed_piece_count = 0
-
-    for piece in piece_metadata:
-        piece_width = piece["width_cm"]
-        piece_height = piece["height_cm"]
-
-        best_shelf_index = None
-        smallest_height_diff = float("inf")
-
-        # Try fitting into existing shelves based on best height match
-        for index, shelf in enumerate(shelves):
-            if piece_height <= shelf["height_cm"]:
-                height_diff = shelf["height_cm"] - piece_height
-                remaining_width = fabric_width - (shelf["x_cursor"] + piece_width)
-
-                if remaining_width >= 0 and height_diff < smallest_height_diff:
-                    best_shelf_index = index
-                    smallest_height_diff = height_diff
-
-        # If a matching shelf is found, place the piece there
-        if best_shelf_index is not None:
-            shelf = shelves[best_shelf_index]
-            x_position = shelf["x_cursor"]
-            y_position = shelf["y_cm"]
-            shelf["x_cursor"] += piece_width + fabric_margin
-            shelf_piece_ids[best_shelf_index].append(piece["id"])
-
-        else:
-            # Create new shelf
-            y_position = (
-                shelves[-1]["y_cm"] + shelves[-1]["height_cm"] + fabric_margin
-                if shelves else 0.0
-            )
-
-            if y_position + piece_height > fabric_length:
-                logger.info(f"Skipping '{piece['id']}' – no vertical space left.")
-                continue
-
-            shelves.append({
-                "y_cm": y_position,
-                "height_cm": piece_height,
-                "x_cursor": piece_width + fabric_margin
-            })
-            shelf_piece_ids.append([piece["id"]])
-            x_position = 0.0
-
-        # Record placement
-        placements.append({
-            "id": piece["id"],
-            "x_cm": x_position,
-            "y_cm": y_position,
-            "normalized_vertices_cm": piece["normalized_vertices_cm"],
-        })
-
-        total_placed_area += piece["area_cm2"]
-        placed_piece_count += 1
-
-    # Shelf summary log
-    logger.info(f"Total shelves used: {len(shelves)}")
-    for i, shelf in enumerate(shelves):
-        logger.info(
-            f"  Shelf {i} (y = {shelf['y_cm']} cm, height = {shelf['height_cm']} cm):"
-        )
-        for pid in shelf_piece_ids[i]:
-            logger.info(f"    - {pid}")
-
-    total_area = fabric_width * fabric_length
-    waste_area = total_area - total_placed_area
+    placements, shelves, area, count = _shelf_fit_base(
+        metas,
+        data["fabric_width_cm"],
+        data["fabric_length_cm"],
+        data["fabric_margin_cm"]
+    )
+    waste = data["fabric_width_cm"] * data["fabric_length_cm"] - area
 
     return {
-        "version": "Shelf Fit BHF",
+        "version": version,
         "placements": placements,
-        "fabric_width_cm": fabric_width,
-        "fabric_length_cm": fabric_length,
-        "placed_count": placed_piece_count,
-        "total_count": len(piece_metadata),
-        "placed_area_cm2": round(total_placed_area, 2),
-        "waste_area_cm2": round(waste_area, 2),
+        "shelves": [{"y_cm": s.y, "height_cm": s.height} for s in shelves],
+        "fabric_width_cm": data["fabric_width_cm"],
+        "fabric_length_cm": data["fabric_length_cm"],
+        "placed_count": count,
+        "total_count": len(metas),
+        "placed_area_cm2": round(area, 2),
+        "waste_area_cm2": round(waste, 2),
+    }
+
+
+def pack_shelf_floor_ceiling(input_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Shelf Fit – Floor–Ceiling variant.
+    Sorts by longest side descending, uses open-shelf floor first,
+    then closed-shelf ceiling, then opens new shelf.
+    """
+    version = "Shelf Floor-Ceiling"
+    # logger.info("========= %s =========", version)
+
+    data = deepcopy(input_data)
+    fw = data["fabric_width_cm"]
+    fl = data["fabric_length_cm"]
+    m = data["fabric_margin_cm"]
+
+    # 1) Sort by longest side descending
+    metas = [compute_piece_metadata(p) for p in data["pieces"]]
+    metas.sort(key=lambda m: max(m["width_cm"], m["height_cm"]), reverse=True)
+
+    placements: List[Dict[str, Any]] = []
+    shelves: List[Shelf] = []
+    total_area = 0.0
+    placed_count = 0
+    next_shelf_y = 0.0
+
+    for meta in metas:
+        pid = meta["id"]
+        w0, h0 = meta["width_cm"], meta["height_cm"]
+        poly0 = meta["normalized_vertices_cm"]
+
+        # logger.info("Attempting '%s' (w:%.1f, h:%.1f)", pid, w0, h0)
+        placed = False
+
+        # 2) Try open-shelf floor
+        if shelves and not shelves[-1].closed:
+            sh = shelves[-1]
+            # logger.info("  Floor check at y=%.1f, height=%.1f, x_cursor=%.1f", sh.y, sh.height, sh.x_cursor)
+            for w, h, rot in ((w0, h0, False), (h0, w0, True)) if w0 != h0 else ((w0, h0, False),):
+                # logger.info("    Floor attempt (%s): %0.fx×%0.fx", "rotated" if rot else "upright", w, h)
+                if sh.can_place_floor(w, h, fw):
+                    poly = [[y, x] for x, y in poly0] if rot else poly0
+                    x = sh.place_on_floor(pid, w)
+                    y = sh.y
+                    # logger.info("    Placed on floor at (%.1f, %.1f)", x, y)
+                    placed = True
+                    break
+                else:
+                    # logger.info("    Does not fit on floor")
+                    pass
+
+
+        # 3) Close shelf if floor failed
+        if not placed and shelves and not shelves[-1].closed:
+            shelves[-1].closed = True
+            # logger.info("  Closing shelf at y=%.1f", shelves[-1].y)
+
+        # 4) Try closed-shelf ceilings
+        if not placed:
+            for sh in shelves:
+                if not sh.closed:
+                    continue
+                # logger.info("  Ceiling check at y=%.1f, height=%.1f, ceil_x=%.1f", sh.y, sh.height, sh.ceil_x)
+                for w, h, rot in ((w0, h0, False), (h0, w0, True)):
+                    # logger.info("    Ceiling attempt (%s): %0.fx×%0.fx", "rotated" if rot else "upright", w, h)
+                    if sh.can_place_ceiling(w, h):
+                        poly = [[y, x] for x, y in poly0] if rot else poly0
+                        x, y = sh.place_on_ceiling(pid, w, h)
+                        # logger.info("    Placed on ceiling at (%.1f, %.1f)", x, y)
+                        placed = True
+                        break
+                    else:
+                        # logger.info("    Does not fit on ceiling")
+                        pass
+                if placed:
+                    break
+
+        # 5) Open a new shelf if still unplaced
+        if not placed:
+            # choose orientation to minimize shelf height
+            if h0 > w0:
+                shelf_h, shelf_w, rot = w0, h0, True
+                poly = [[y, x] for x, y in poly0]
+            else:
+                shelf_h, shelf_w, rot = h0, w0, False
+                poly = poly0
+
+            if next_shelf_y + shelf_h > fl:
+                # logger.warning("Skipping '%s' – no vertical space for new shelf", pid)
+                continue
+
+            sh = Shelf(next_shelf_y, shelf_h, m, fw)
+            shelves.append(sh)
+            # logger.info("  Opened new shelf at y=%.1f, height=%.1f", next_shelf_y, shelf_h)
+            x = sh.place_on_floor(pid, shelf_w)
+            y = sh.y
+            # logger.info("    Placed on floor at (%.1f, %.1f)", x, y)
+            next_shelf_y += shelf_h + m
+
+        # record final placement
+        if placed or not shelves or shelves[-1].piece_ids[-1] == pid:
+            placements.append({
+                "id": pid,
+                "x_cm": x,
+                "y_cm": y,
+                "normalized_vertices_cm": poly,
+            })
+            total_area += meta["area_cm2"]
+            placed_count += 1
+
+    waste = fw * fl - total_area
+    return {
+        "version": version,
+        "placements": placements,
+        "shelves": [{"y_cm": s.y, "height_cm": s.height} for s in shelves],
+        "fabric_width_cm": fw,
+        "fabric_length_cm": fl,
+        "placed_count": placed_count,
+        "total_count": len(metas),
+        "placed_area_cm2": round(total_area, 2),
+        "waste_area_cm2": round(waste, 2),
     }

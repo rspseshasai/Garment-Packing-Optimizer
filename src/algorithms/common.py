@@ -12,6 +12,7 @@ def compute_piece_metadata(piece: Dict[str, Any]) -> Dict[str, Any]:
         "id": piece["id"],
         "width_cm": x_max - x_min,
         "height_cm": y_max - y_min,
-        "area_cm2": calculate_polygon_area(piece_vertices),
+        # "area_cm2": calculate_polygon_area(piece_vertices),
+        "area_cm2": (x_max - x_min) * (y_max - y_min),
         "normalized_vertices_cm": normalized,
     }

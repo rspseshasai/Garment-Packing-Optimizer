@@ -6,8 +6,8 @@ from ..utils.logger_utils import logger
 
 def pack_first_fit_row_wise(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
-    logger.info(f"\n")
-    logger.info(f"========= ========= First-Fit Row-Wise ========= =========")
+    # logger.info(f"\n")
+    # logger.info(f"========= ========= First-Fit Row-Wise ========= =========")
     fabric_w = input_data["fabric_width_cm"]
     fabric_l = input_data["fabric_length_cm"]
     margin = input_data["fabric_margin_cm"]
@@ -32,7 +32,7 @@ def pack_first_fit_row_wise(input_data: Dict[str, Any]) -> Dict[str, Any]:
             max_row_h = 0.0
 
         if y_cursor + h > fabric_l:
-            logger.info("Skipping piece '%s': no vertical space", piece["id"])
+            # logger.info("Skipping piece '%s': no vertical space", piece["id"])
             continue
 
         placements.append({
@@ -41,7 +41,7 @@ def pack_first_fit_row_wise(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "y_cm": y_cursor,
             "normalized_vertices_cm": piece["normalized_vertices_cm"],
         })
-        logger.info("Placed piece '%s' at (%.2f, %.2f)", piece["id"], x_cursor, y_cursor)
+        # logger.info("Placed piece '%s' at (%.2f, %.2f)", piece["id"], x_cursor, y_cursor)
 
         x_cursor += w + margin
         max_row_h = max(max_row_h, h)

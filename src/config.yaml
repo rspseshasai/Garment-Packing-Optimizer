@@ -1,8 +1,10 @@
 algorithms:
-  - first_fit
-#  - shelf_bhf
-  - shelf_bwf
-  - shelf_bfdh
+#  - first_fit
+#  - shelf_bwf
+#  - shelf_bfdh
+  - shelf_floor_ceil
   - maxrects
 
-input_file: ../inputs/input2.json
+#input_file: ../input/big_polygon_input.json
+input_file: ../input/input2.json
+#input_file: ../input/input1.json
