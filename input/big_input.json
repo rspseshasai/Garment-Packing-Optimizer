@@ -1,6 +1,6 @@
 {
-  "fabric_length_cm": 5000,
-  "fabric_width_cm": 4000,
+  "fabric_length_cm": 2500,
+  "fabric_width_cm": 1000,
   "fabric_margin_cm": 0,
   "pieces": [
     {

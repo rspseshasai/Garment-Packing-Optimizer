@@ -5,6 +5,6 @@ algorithms:
   - shelf_floor_ceil
   - maxrects
 
-#input_file: ../input/big_polygon_input.json
 input_file: ../input/input2.json
-#input_file: ../input/input1.json
+
+show_placement_order: False

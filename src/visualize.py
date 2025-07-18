@@ -4,12 +4,14 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import title
 from tabulate import tabulate
 
+from src.utils.config_loader import load_yaml_config
 from src.utils.logger_utils import logger
 
 PASTEL_COLORS = [
     "#aec6cf", "#ffb347", "#77dd77", "#f49ac2",
     "#cfcfc4", "#836953", "#b39eb5", "#fdfd96"
 ]
+config = load_yaml_config()
 
 
 def plot_packing_results(results: List[Dict[str, Any]]) -> None:
@@ -61,14 +63,19 @@ def plot_packing_results(results: List[Dict[str, Any]]) -> None:
 
             # garment polygon
             ax.add_patch(patches.Polygon(
-                shifted, closed=True,
+                shifted,
                 facecolor=color, alpha=0.6, edgecolor=color
             ))
+            # show placement order
+            if bool(config.get("show_placement_order")):
+                ax.text(x0 + w / 2, y0 + h / 2, str(plc["placement_order"]),
+                        ha="center", va="center", fontsize=8, color="black")
 
             if pid not in seen:
                 handles.append(patches.Patch(facecolor=color, edgecolor=color))
                 labels.append(pid)
                 seen.add(pid)
+
 
         # legend outside
         ax.legend(handles, labels,

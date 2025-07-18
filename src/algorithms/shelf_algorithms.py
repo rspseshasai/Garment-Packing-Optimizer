@@ -57,7 +57,7 @@ def _shelf_fit_base(
     shelves: List[Shelf] = []
     placed_area = 0.0
     placed_count = 0
-
+    placement_order = 1
     for meta in metas:
         pid = meta["id"]
         width = meta["width_cm"]
@@ -93,9 +93,10 @@ def _shelf_fit_base(
             "x_cm": x,
             "y_cm": y,
             "normalized_vertices_cm": meta["normalized_vertices_cm"],
+            "placement_order" : placement_order,
         })
         # logger.info("Placed '%s' at (%.2f, %.2f)", pid, x, y)
-
+        placement_order += 1
         placed_area += meta["area_cm2"]
         placed_count += 1
 
@@ -172,6 +173,7 @@ def pack_shelf_floor_ceiling(input_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     version = "Shelf Floor-Ceiling"
     # logger.info("========= %s =========", version)
+    placement_order = 1
 
     data = deepcopy(input_data)
     fw = data["fabric_width_cm"]
@@ -268,9 +270,11 @@ def pack_shelf_floor_ceiling(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 "x_cm": x,
                 "y_cm": y,
                 "normalized_vertices_cm": poly,
+                "placement_order": placement_order
             })
             total_area += meta["area_cm2"]
             placed_count += 1
+            placement_order += 1
 
     waste = fw * fl - total_area
     return {

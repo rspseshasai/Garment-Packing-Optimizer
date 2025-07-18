@@ -20,10 +20,10 @@ def generate_random_polygon(w: float, h: float, num_vertices: int) -> list:
     return [[round(x - min_x, 2), round(y - min_y, 2)] for x, y in points]
 
 def generate_big_polygon_input(
-    filename: str = "../../input/big_polygon_input.json",
-    num_pieces: int = 1000,
-    fabric_width: int = 3000,
-    fabric_length: int = 5000,
+    filename: str = "../../input/big_polygon_input_400.json",
+    num_pieces: int = 400,
+    fabric_width: int = 500,
+    fabric_length: int = 700,
     margin: int = 0
 ):
     data = {

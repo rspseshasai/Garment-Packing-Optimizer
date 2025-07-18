@@ -13,6 +13,7 @@ def pack_with_maxrects(input_data: Dict[str, Any]) -> Dict[str, Any]:
     fabric_w = input_data["fabric_width_cm"]
     fabric_l = input_data["fabric_length_cm"]
     margin = input_data["fabric_margin_cm"]
+    placement_order = 1
 
     usable_w = fabric_w - 2 * margin
     usable_l = fabric_l - 2 * margin
@@ -51,7 +52,9 @@ def pack_with_maxrects(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "height_cm": h,
             "is_rotated": rotated,
             "normalized_vertices_cm": verts,
+            "placement_order": placement_order
         })
+        placement_order += 1
         placed_area += meta["area_cm2"]
         # logger.info("Placed piece '%s' at (%.2f, %.2f)", rid, x + margin, y + margin)
 
