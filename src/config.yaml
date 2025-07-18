@@ -7,4 +7,4 @@ algorithms:
 
 input_file: ../input/input2.json
 
-show_placement_order: False
+show_placement_order: True
