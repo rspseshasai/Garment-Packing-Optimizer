@@ -1,7 +1,7 @@
 algorithms:
-#  - first_fit
-#  - shelf_bwf
-#  - shelf_bfdh
+  - first_fit
+  - shelf_bwf
+  - shelf_bfdh
   - shelf_floor_ceil
   - maxrects
 

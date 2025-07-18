@@ -1,4 +1,3 @@
-import logging
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -7,7 +6,6 @@ from ..utils.logger_utils import logger
 
 
 class Shelf:
-    """Represents a horizontal shelf for placing rectangles."""
 
     def __init__(self, y: float, height: float, margin: float, fabric_width: Optional[float] = None):
         self.y = y
@@ -16,7 +14,7 @@ class Shelf:
         self.x_cursor = 0.0
         self.piece_ids: List[str] = []
 
-        # only used by Floor–Ceiling variant
+        # only used by Floor–Ceiling
         self.ceil_x: Optional[float] = fabric_width
         self.closed: bool = False
 
@@ -49,10 +47,7 @@ def _shelf_fit_base(
     fabric_length: float,
     margin: float
 ) -> Tuple[List[Dict[str, Any]], List[Shelf], float, int]:
-    """
-    Core Best‑Width Fit shelf logic.
-    Returns (placements, shelves, placed_area, placed_count).
-    """
+
     placements: List[Dict[str, Any]] = []
     shelves: List[Shelf] = []
     placed_area = 0.0
@@ -104,10 +99,7 @@ def _shelf_fit_base(
 
 
 def pack_shelf_fit_bwf(input_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Shelf Fit – Best Width Fit.
-    Greedily places each piece in the shelf with least leftover width.
-    """
+
     version = "Shelf Fit BWF"
     # logger.info("========= %s =========", version)
 
@@ -133,10 +125,7 @@ def pack_shelf_fit_bwf(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def pack_shelf_fit_bfdh(input_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Shelf Fit – Best Fit Decreasing Height.
-    Sorts pieces by height descending, then applies BWF logic.
-    """
+
     version = "Shelf Fit BFDH"
     # logger.info("========= %s =========", version)
 
@@ -166,11 +155,7 @@ def pack_shelf_fit_bfdh(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def pack_shelf_floor_ceiling(input_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Shelf Fit – Floor–Ceiling variant.
-    Sorts by longest side descending, uses open-shelf floor first,
-    then closed-shelf ceiling, then opens new shelf.
-    """
+
     version = "Shelf Floor-Ceiling"
     # logger.info("========= %s =========", version)
     placement_order = 1

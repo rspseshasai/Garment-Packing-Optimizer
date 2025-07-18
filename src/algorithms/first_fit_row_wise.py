@@ -26,7 +26,6 @@ def pack_first_fit_row_wise(input_data: Dict[str, Any]) -> Dict[str, Any]:
         w, h = piece["width_cm"], piece["height_cm"]
 
         if x_cursor + w > fabric_w:
-            # start new row
             x_cursor = 0.0
             y_cursor += max_row_h + margin
             max_row_h = 0.0

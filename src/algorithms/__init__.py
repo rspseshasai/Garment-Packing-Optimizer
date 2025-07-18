@@ -14,7 +14,6 @@ ALGORITHM_REGISTRY = {
     "maxrects": pack_with_maxrects,
 }
 
-# Load config and get enabled algorithm keys
 _config = load_yaml_config()
 _enabled_keys = _config.get("algorithms", [])
 

@@ -1,11 +1,10 @@
 from typing import Dict, List, Any
+
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import title
 from tabulate import tabulate
 
 from src.utils.config_loader import load_yaml_config
-from src.utils.logger_utils import logger
 
 PASTEL_COLORS = [
     "#aec6cf", "#ffb347", "#77dd77", "#f49ac2",
@@ -75,7 +74,6 @@ def plot_packing_results(results: List[Dict[str, Any]]) -> None:
                 handles.append(patches.Patch(facecolor=color, edgecolor=color))
                 labels.append(pid)
                 seen.add(pid)
-
 
         # legend outside
         ax.legend(handles, labels,
